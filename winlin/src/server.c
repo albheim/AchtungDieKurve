@@ -84,13 +84,13 @@ struct client serv_accept()
 
 void serv_disconnect(struct client c)
 {
-	close(c.socket);
+	CLOSESOCKET(c.socket);
 }
 
 void serv_stop()
 {
 	free(listen_server);
-	close(*listen_socket);
+	CLOSESOCKET(*listen_socket);
 	free(listen_socket);
 	#ifdef WINDOWS
 	WSACleanup();

@@ -1,11 +1,19 @@
 #ifndef CLIENT_GRAPHICS_H
 #define CLIENT_GRAPHICS_H
 
-#include"SDL2/SDL_ttf.h"
 #include<stdlib.h>
 #include<stdio.h>
-#include<pthread.h>
+#include"SDL2/SDL_ttf.h"
 #include"geometry.h"
+#include"events.h"
+
+#ifdef WINDOWS
+#include<windows.h>
+#else
+#include<pthread.h>
+#endif
+
+#include"multiplatform.h"
 
 #ifdef DEBUG
 #include"test_client.h"
@@ -22,24 +30,6 @@ enum colors {
 	ORANGE,
 	GREY,
 	PINK
-};
-
-enum event {
-	QUIT = -1,
-	NONE,
-	DOWN_LEFT,
-	DOWN_RIGHT,
-	UP_1L,
-	UP_1R,
-	UP_2L,
-	UP_2R,
-	UP_3L,
-	UP_3R,
-	UP_4L,
-	UP_4R,
-	UP_5L,
-	UP_5R,
-	UP_ULRICA,
 };
 
 struct graphics_player{

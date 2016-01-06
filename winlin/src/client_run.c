@@ -1,66 +1,104 @@
+#include"client.h"
 #include"client_graphics.h"
 #include"game_identifiers.h"
-#include"client.h"
 
 static int playing, running;
-static pthread_t events, sendh, recvh;
+static THREAD events;
 
 int string_to_int(char* in)
 {
-	int nbr, i;
-	if(in == NULL)
-		return -1;
+	int nbr, minus, i;
+	if(in == NULL || strlen(in) == 0)
+		return -2;
+	if(in[0] == '-')
+	{
+		minus = -1;
+		i = 1;
+	}
+	else
+	{
+		minus = 1;
+		i = 0;
+	}
 	nbr = 0;
-	for (i = 0; i < strlen(in); i++)
+	for (; i < strlen(in); i++)
 	{
 		if(!isdigit(in[i]))
-			return -1;
+			return -2;
 		nbr *= 10;
 		nbr += in[i] - '0';
 	}
+	nbr *= minus;
 	return nbr;
+}
+
+void points(int length)
+{
+	char *p, *points;
+	int i, ip, ipoints;
+	for(i = 0; i < length; i++)
+	{
+		p = strtok(NULL, " ");
+		points = strtok(NULL, " ");
+		ip = string_to_int(p);
+		ipoints = string_to_int(points);
+		if(ip == -2 || ipoints == -2)
+			return;
+		change_points(ip, ipoints);
+	}
+}
+
+void pixels(int length)
+{
+	char *col, *x, *y; 
+	int i, icol, ix, iy;
+	for(i = 0; i < length; i++)
+	{
+		col = strtok(NULL, " ");
+		x = strtok(NULL, " ");
+		y = strtok(NULL, " ");
+		icol = string_to_int(col);
+		ix = string_to_int(x);
+		iy = string_to_int(y);
+		if(icol == -2 || ix == -2 || iy == -2)
+			return;
+		color_pixel(icol, ix, iy);
+	}
 }
 
 void game_msg(char *recv_msg)
 {
-	char *type, *col, *x, *y, *p, *points;
-	int icol, ix, iy, ip, ipoints;
+	char *type; 
+	int length;
 	type = strtok(recv_msg, " ");
 	while (type != NULL)
 	{
+		if(type[0] != GAME_MSG)
+		{
+			//input chat message
+			type = strtok(NULL, " ");
+			continue;
+		}
 		if(type[1] == '1')
+		{
 			clear_window();
+		}
 		else if(type[1] == '2')
 		{
-			p = strtok(NULL, " ");
-			points = strtok(NULL, " ");
-			ip = string_to_int(p);
-			ipoints = string_to_int(points);
-			if(ip == -1 || ipoints == -1)
-				return;
-			change_points(ip, ipoints);
+			length = type[2] - '0';
+			points(length);
 		}
 		else if(type[1] == '3')
 		{
-			col = strtok(NULL, " ");
-			x = strtok(NULL, " ");
-			y = strtok(NULL, " ");
-			icol = string_to_int(col);
-			ix = string_to_int(x);
-			iy = string_to_int(y);
-			if(icol == -1 || ix == -1 || iy == -1)
-				return;
-			color_pixel(icol, ix, iy);
+			length = type[2] - '0';
+			pixels(length);
 		}
-		else
-		{
-		}	
 		type = strtok(NULL, " ");
 	}
 	update_window();
 }
 
-void thread_check_events2()
+THREADFUNC thread_check_events(void* data)
 {
 	int event;
 	char msg[3];
@@ -78,22 +116,10 @@ void thread_check_events2()
 	snprintf(send_msg, 4, "%c%d", GAME_MSG, QUIT);
 	cli_send(send_msg);
 	close_window();
+	return THREADRETURN;
 }
-#ifdef WINDOWS
-DWORD WINAPI thread_check_events(void *data)
-{
-	thread_check_events2()
-	return 0;
-}
-#else
-void *thread_check_events(void *data)
-{
-	thread_check_events2();
-	return NULL;
-}
-#endif
 
-void play(char* recv_msg)
+void start(char* recv_msg)
 {
 	char *name;
 	int length, i = 0;
@@ -108,7 +134,7 @@ void play(char* recv_msg)
 		name = strtok(NULL, " ");
 	} 
 	init_sdl(players, length);
-	thread_create(&events, thread_check_events, NULL);
+	THREAD_CREATE(&events, thread_check_events, NULL);
 }
 
 int check_recv(char *recv_msg)
@@ -123,7 +149,7 @@ int check_recv(char *recv_msg)
 	{
 		playing = 1;
 		printf("go\n");
-		play(recv_msg);
+		start(recv_msg);
 		return 1;
 	}
 	if(recv_msg[0] != GAME_MSG || !playing)
@@ -132,7 +158,7 @@ int check_recv(char *recv_msg)
 	return 1;
 }
 
-void thread_recv2()
+THREADFUNC thread_recv(void* data)
 {
 	printf("receiving\n");
 	char *recv_msg;
@@ -144,23 +170,10 @@ void thread_recv2()
 		printf("%s\n", recv_msg);
 	}
 	free(recv_msg);
+	return THREADRETURN;
 }
 
-#ifdef WINDOWS
-DWORD WINAPI thread_recv(void *data)
-{
-	thread_recv2();
-	return 0;
-}
-#else
-void* thread_recv(void *data)
-{
-	thread_recv2();
-	return NULL;
-}
-#endif
-
-void thread_send2()
+THREADFUNC thread_send(void* data)
 {
 	printf("sending\n");
 	char send_msg[100];
@@ -172,22 +185,10 @@ void thread_send2()
 		send_msg[strlen(send_msg)-1] = '\0';
 		cli_send(send_msg);
 	}
+	return THREADRETURN;
 }
 
-#ifdef WINDOWS
-DWORD WINAPI thread_send(void* data)
-{
-	thread_send2();
-	return 0;
-}
-#else
-void* thread_send(void *data)
-{
-	thread_send2();
-	return NULL;
-}
-#endif
-
+#ifndef U_GAME
 int main(int argc, char* argv[])
 {
 	int port = 8888;
@@ -195,13 +196,14 @@ int main(int argc, char* argv[])
 	init(port, ip_adress);
 	running = 1;
 
+	THREAD sendh, recvh;
+	THREAD_CREATE(&sendh, thread_send, NULL);
+	THREAD_CREATE(&recvh, thread_recv, NULL);
 
-	thread_create(&sendh, thread_send, NULL);
-	thread_create(&recvh, thread_recv, NULL);
-
-	thread_wait(sendh);
-	thread_wait(recvh);
+	THREAD_WAIT(&sendh);
+	THREAD_WAIT(&recvh);
 	cli_close();
 
 	return 0;
 }
+#endif

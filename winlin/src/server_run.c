@@ -1,12 +1,12 @@
 #include"server.h"
 #include"game_identifiers.h"
 #include"game.h"
+#include"extern.h"
 
 struct clients *clients;
-static int playing;
-static int mode = 1;
-static int win_points = 20;
-static pthread_t handle_play;
+static int mode = 1, win_points = 20, speed;
+static THREAD handle_play;
+int playing;
 
 void send_to_all(char *send_msg, int uid)
 {
@@ -18,27 +18,14 @@ void send_to_all(char *send_msg, int uid)
 	}
 }
 
-void thread_play2()
+THREADFUNC thread_play(void* data)
 {
 	playing = 1;
-	play(mode, win_points, clients);
+	play(mode, win_points, speed, clients);
 	playing = 0;
+	return THREADRETURN;
 }
 	
-#ifdef WINDOWS
-DWORD WINAPI thread_play(void *data)
-{
-	thread_play2();
-	return 0;
-}
-#else
-void* thread_play(void *data)
-{
-	thread_play2();
-	return NULL;
-}	
-#endif
-
 int game_check(char* recv_msg, int id)
 {
 	recv_msg[0] = '.';
@@ -68,7 +55,7 @@ int check(char *recv_msg, int id)
 	}
 	if(strcmp(recv_msg, GAME_START) == 0 && !playing)
 	{
-		thread_create(&handle_play, thread_play, NULL);
+		THREAD_CREATE(&handle_play, thread_play, NULL);
 		return 3;
 	}
 
@@ -102,7 +89,7 @@ int check(char *recv_msg, int id)
 	return 2;
 }
 
-void thread_cli2(void* data)
+THREADFUNC thread_cli(void* data)
 {
 	struct client *client;
 	client = (struct client*)data;
@@ -129,20 +116,8 @@ void thread_cli2(void* data)
 		snprintf(send_msg, 256, "%s: %s", client->name, recv_msg);
 		send_to_all(send_msg, client->uid);
 	}
+	return THREADRETURN;
 }
-#ifdef WINDOWS
-DWORD WINAPI thread_cli(void* data)
-{
-	thread_cli2(data);
-	return 0;
-}
-#else
-void* thread_cli(void *data)
-{
-	thread_cli2(data);
-	return NULL;
-}
-#endif
 
 int run()
 {
@@ -156,7 +131,7 @@ int run()
 		client.uid = clients->size + 1;
 		clients->client[clients->size] = client;
 
-		thread_create(&client.thread, thread_cli, &clients->client[clients->size]);
+		THREAD_CREATE(&client.thread, thread_cli, &clients->client[clients->size]);
 	}
 	return clients->size;
 }

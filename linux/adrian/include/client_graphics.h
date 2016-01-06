@@ -48,7 +48,7 @@ struct graphics_player{
 };
 
 void init_sdl(struct graphics_player *,int);
-void pause_sdl();
+void close_window();
 void clear_window();
 void color_pixel(int, int, int);
 void update_window();

@@ -38,7 +38,7 @@ void init_sdl(struct graphics_player *p, int l)
 		atexit(SDL_Quit);
 		atexit(TTF_Quit);
 	}
-	if ((lock = CreateMutex(NULL, TRUE,  NULL)) == NULL)
+	if ((lock = CreateMutex(NULL, FALSE,  NULL)) == NULL)
 	{
 		printf("\n mutex init failed\n");
 		return;
@@ -72,7 +72,6 @@ void init_sdl(struct graphics_player *p, int l)
 
 	update_window();
 	init_system = 1;
-	ReleaseMutex(lock);
 }
 
 void close_window()

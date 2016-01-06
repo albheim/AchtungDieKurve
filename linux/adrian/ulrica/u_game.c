@@ -283,7 +283,7 @@ void *thread_check_events(void *data)
 		}
 	}
 	playing = 0;
-	pause_sdl();
+	close_window();
 	return NULL;
 }
 

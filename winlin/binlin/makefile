@@ -28,9 +28,21 @@ clean:
 
 
 ############### ULRICA ################
-u_game.out: u_game.o extras.o client_graphics.o 
+u_game.out: u_game.o extras.o client_graphics3.o 
+#game3.o client_run3.o
 	$(CC) $(OFLAGS) -o $@ $^ -lSDL2 -lSDL2_ttf -pthread
 
+game3.o: game.c
+	$(CC) $(CFLAGS) -c -D U_GAME $<
+	mv game.o game3.o
+
+client_run3.o: client_run.c
+	$(CC) $(CFLAGS) -c -D U_GAME $<
+	mv client_run.o client_run3.o
+
+client_graphics3.o: ../../linux/adrian/src/client_graphics.c
+	$(CC) $(CFLAGS) -c $<
+	mv client_graphics.o client_graphics3.o
 
 
 

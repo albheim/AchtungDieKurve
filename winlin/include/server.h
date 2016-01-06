@@ -10,19 +10,14 @@
 #ifdef WINDOWS
 #include<winsock2.h>
 #include<windows.h>
-#include"win.h"
-#define pthread_t HANDLE
-#define pthread_mutex_t HANDLE
-#define close closesocket
-#define socklen_t int
 #else
 #include<arpa/inet.h> 
 #include<pthread.h>
-#include"lin.h"
 #include<sys/socket.h>
 #include<unistd.h>
-#define SOCKET int
 #endif
+
+#include"multiplatform.h"
 
 #ifdef DEBUG
 #include"test_server.h"
@@ -35,7 +30,7 @@ struct client
   SOCKET socket;
   clock_t timestamp;
   struct sockaddr_in cli_addr;
-  pthread_t thread;
+  THREAD thread;
   char name[10];
 };
 

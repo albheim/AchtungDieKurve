@@ -7,7 +7,7 @@ static SDL_Window *window;
 static SDL_Renderer *renderer;
 static TTF_Font *font;
 static struct graphics_player *players;
-static pthread_mutex_t lock;
+//static MUTEX lock;
 
 void init_colors()
 {
@@ -26,7 +26,7 @@ void init_colors()
 
 void init_sdl(struct graphics_player *p, int l)
 {
-	if(init_window == 1)
+	if(init_window)
 		return;
 
 	SDL_Surface *text;
@@ -37,12 +37,9 @@ void init_sdl(struct graphics_player *p, int l)
 		TTF_Init();
 		atexit(SDL_Quit);
 		atexit(TTF_Quit);
+		init_system = 1;
 	}
-	if (pthread_mutex_init(&lock, NULL) != 0)
-	{
-		printf("\n mutex init failed\n");
-		return;
-	}
+	//MUTEX_CREATE(&lock);
 	window = SDL_CreateWindow("Achtung", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, 0); 
 	renderer = SDL_CreateRenderer(window, -1, 0);
 	surface = SDL_GetWindowSurface(window);
@@ -69,9 +66,7 @@ void init_sdl(struct graphics_player *p, int l)
 		SDL_BlitSurface(text, NULL, surface, &r);
 		SDL_FreeSurface(text);
 	}
-
 	update_window();
-	init_system = 1;
 }
 
 void close_window()
@@ -79,52 +74,52 @@ void close_window()
 	if(!init_window)
 		return;
 	init_window = 0;
-	pthread_mutex_lock(&lock);
+	//MUTEX_LOCK(&lock);
 	free(colors);
 	free(players);
 	SDL_DestroyRenderer(renderer);
 	SDL_FreeSurface(surface);
 	SDL_DestroyWindow(window);
 	TTF_CloseFont(font);
-	pthread_mutex_unlock(&lock);
-	pthread_mutex_destroy(&lock);
+	//MUTEX_UNLOCK(&lock);
+	//MUTEX_DESTROY(&lock);
 }
 
 void clear_window()
 {
 	if(!init_window)
 		return;
-	pthread_mutex_lock(&lock);
+	//MUTEX_LOCK(&lock);
 	SDL_Rect r;
 	r = (SDL_Rect) {0,0,WIDTH-MENU_WIDTH,HEIGHT};
 	SDL_FillRect(surface, &r, SDL_MapRGB(surface->format, 0,0,0));
-	pthread_mutex_unlock(&lock);
+	//MUTEX_UNLOCK(&lock);
 }
 
 void color_pixel(int color, int x, int y)
 {
 	if(!init_window)
 		return;
-	pthread_mutex_lock(&lock);
+	//MUTEX_LOCK(&lock);
 	Uint32 *pixels;
 	SDL_Color c;
 
 	c = colors[color];
 	if (x<0 || y<0 || x>WIDTH-1 || y>HEIGHT-1)
 	{
-		pthread_mutex_unlock(&lock);
+		//MUTEX_UNLOCK(&lock);
 		return;
 	}
 	pixels = (Uint32*) surface->pixels; 
 	pixels[x+y*WIDTH] = SDL_MapRGB(surface->format, c.r, c.g, c.b);
-	pthread_mutex_unlock(&lock);
+	//MUTEX_UNLOCK(&lock);
 }
 
 void change_points(int color, int points)
 {
 	if(!init_window)
 		return;
-	pthread_mutex_lock(&lock);
+	//MUTEX_LOCK(&lock);
 	char out[14];
 	SDL_Surface *text;
 
@@ -135,14 +130,14 @@ void change_points(int color, int points)
 	SDL_FillRect(surface, &(players[color].r), SDL_MapRGB(surface->format, 0,0,0));
 	SDL_BlitSurface(text, NULL, surface, &(players[color].r));
 	SDL_FreeSurface(text);
-	pthread_mutex_unlock(&lock);
+	//MUTEX_UNLOCK(&lock);
 }	
 
 void update_window()
 {
 	if(!init_window)
 		return;
-	pthread_mutex_lock(&lock);
+	//MUTEX_LOCK(&lock);
 	SDL_Texture *texture;
 	if((texture = SDL_CreateTextureFromSurface(renderer, surface)) == NULL)
 	{
@@ -157,7 +152,7 @@ void update_window()
 	}
 	SDL_RenderPresent(renderer);
 	SDL_DestroyTexture(texture);
-	pthread_mutex_unlock(&lock);
+	//MUTEX_UNLOCK(&lock);
 }
 
 int get_event()
@@ -166,9 +161,13 @@ int get_event()
 		return NONE;
 	SDL_Event event;
 	if(!SDL_PollEvent(&event))
+	{
 		return NONE;
+	}
 	if (event.type == SDL_QUIT) 
+	{
 		return QUIT;
+	}
 	else if (event.type == SDL_KEYDOWN)
 	{
 		switch(event.key.keysym.sym)
@@ -222,25 +221,3 @@ int get_event()
 	}
 	return NONE;
 }
-/*
-void run()
-{
-	int a = 0;
-	while(1)
-	{
-		a = get_event();
-		if (a == 3)
-		{
-			printf("Left\n");
-		}
-		if (a == 4)
-		{
-			printf("Right\n");
-		}
-		if (a == -1)
-		{
-			break;
-		}
-	}
-}
-*/

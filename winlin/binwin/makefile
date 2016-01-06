@@ -1,10 +1,10 @@
 #SHELL=C:/Windows/System32/cmd.exe
 INCLUDE_PATH = -I../include
-LIBRARY_PATH = -L../library
+LIBRARY_PATH = -L../lib
 VPATH = ../include/ ../src/ ../library/ ../tdd/ ../ulrica/
 
 CC = /opt/mingw32/bin/i686-w64-mingw32-gcc
-CFLAGS  = -D WINDOWS -std=c11 -pedantic -Wall -Werror -g -O3 -funsigned-char -I../include/
+CFLAGS  = -D WINDOWS -std=c11 -pedantic -Wall -Werror -g -O3 -funsigned-char $(INCLUDE_PATH)
 OFLAGS = -g  $(INCLUDE_PATH) $(LIBRARY_PATH)
 
 SERVER_OBJS = server.o game.o 
@@ -31,9 +31,21 @@ clean:
 
 
 ########### Ulrica ##############
-u_game.exe: u_game.o extras.o client_graphics.o 
+u_game.exe: u_game.o extras.o client_graphics3.o game3.o client_run3.o 
 	$(CC) $(OFLAGS) -o $@ $^ -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
 
+game3.o: game.c
+	$(CC) $(CFLAGS) -c -D U_GAME $<
+	mv game.o game3.o
+
+client_run3.o: client_run.c
+	$(CC) $(CFLAGS) -c -D SDL_main=notmain $<
+	mv client_run.o client_run3.o
+
+client_graphics3.o: ../../windows/src/client_graphics.c
+	$(CC) $(CFLAGS) -c $<
+	mv client_graphics.o client_graphics3.o
+	
 
 
 ################## TDD #####################

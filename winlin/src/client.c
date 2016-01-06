@@ -80,6 +80,6 @@ void cli_send(char *message)
 
 void cli_close()
 {
-	close(server->socket);
+	CLOSESOCKET(server->socket);
 	free(server);
 }

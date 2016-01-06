@@ -26,7 +26,7 @@ void init_colors()
 
 void init_sdl(struct graphics_player *p, int l)
 {
-	if(init_window == 1)
+	if(init_window)
 		return;
 
 	SDL_Surface *text;
@@ -74,7 +74,7 @@ void init_sdl(struct graphics_player *p, int l)
 	init_system = 1;
 }
 
-void pause_sdl()
+void close_window()
 {
 	if(!init_window)
 		return;
@@ -140,10 +140,12 @@ void change_points(int color, int points)
 
 void update_window()
 {
+	printf("1\n");
 	if(!init_window)
 		return;
 	pthread_mutex_lock(&lock);
 	SDL_Texture *texture;
+	printf("2\n");
 	if((texture = SDL_CreateTextureFromSurface(renderer, surface)) == NULL)
 	{
 		fprintf(stderr, "error allocating texture");
@@ -156,8 +158,10 @@ void update_window()
 		exit(1);
 	}
 	SDL_RenderPresent(renderer);
+	printf("3\n");
 	SDL_DestroyTexture(texture);
 	pthread_mutex_unlock(&lock);
+	printf("4\n");
 }
 
 int get_event()
