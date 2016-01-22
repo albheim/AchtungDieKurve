@@ -28,10 +28,20 @@ clean:
 
 
 ############### ULRICA ################
-u_game.out: u_game.o extras.o client_graphics.o 
+#u_game.out: u_game.o extras.o client_graphics.o 
+#	$(CC) $(OFLAGS) -o $@ $^ -lSDL2 -lSDL2_ttf -pthread
+
+
+u_game.out: u_game.o extras.o client_graphics.o client_run3.o game3.o
 	$(CC) $(OFLAGS) -o $@ $^ -lSDL2 -lSDL2_ttf -pthread
 
+game3.o: game.c
+	$(CC) $(CFLAGS) -c -D U_GAME $<
+	mv game.o game3.o
 
+client_run3.o: client_run.c
+	$(CC) $(CFLAGS) -c -pthread -D main=notmain -include extern.h $<
+	mv client_run.o client_run3.o
 
 
 
@@ -92,14 +102,14 @@ test_client: compile_client $(CLIENT_TEST_CASES)
 compile_client.out: test_client.o client_graphics.o client.o client_run2.o
 	$(CC) $(OFLAGS) -o $@ $^ $(CLIENT_LIBS)
 
-test_client.o: test_client.c client.h
-	$(CC) $(CFLAGS) -c $< -I./client/
+test_client.o: test_client.c 
+	$(CC) $(CFLAGS) -c $< ../include/client.h
 
 test_graphics.out: test_graphics.c client_graphics.o extras.o
 	$(CC) $(OFLAGS) -o $@ $^ $(CLIENT_LIBS)
 
 client_run2.o: client_run.c
-	$(CC) $(CFLAGS) -c $< -I./tdd/ -D DEBUG
+	$(CC) $(CFLAGS) -c $< -I../tdd/ -D DEBUG
 	mv client_run.o client_run2.o
 
 client_case_chat:

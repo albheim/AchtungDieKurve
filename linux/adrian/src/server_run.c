@@ -3,9 +3,8 @@
 #include"game.h"
 
 struct clients *clients;
-static int playing;
-static int mode = 1;
-static int win_points = 20;
+int playing;
+static int mode = 1, win_points = 20, speed;
 static pthread_t handle_play;
 
 void send_to_all(char *send_msg, int uid)
@@ -21,7 +20,7 @@ void send_to_all(char *send_msg, int uid)
 void* thread_play(void *data)
 {
 	playing = 1;
-	play(mode, win_points, clients);
+	play(mode, win_points, speed, clients);
 	playing = 0;
 	return NULL;
 }	
@@ -112,7 +111,7 @@ void* thread_cli(void *data){
 		}
 		else if (check_ret == 3)
 			continue;
-		snprintf(send_msg, 256, "%s: %s", client->name, recv_msg);
+		snprintf(send_msg, 256, "%s: %s ", client->name, recv_msg);
 		send_to_all(send_msg, client->uid);
 	}
 	return NULL;

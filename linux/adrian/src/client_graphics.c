@@ -140,12 +140,10 @@ void change_points(int color, int points)
 
 void update_window()
 {
-	printf("1\n");
 	if(!init_window)
 		return;
 	pthread_mutex_lock(&lock);
 	SDL_Texture *texture;
-	printf("2\n");
 	if((texture = SDL_CreateTextureFromSurface(renderer, surface)) == NULL)
 	{
 		fprintf(stderr, "error allocating texture");
@@ -158,10 +156,8 @@ void update_window()
 		exit(1);
 	}
 	SDL_RenderPresent(renderer);
-	printf("3\n");
 	SDL_DestroyTexture(texture);
 	pthread_mutex_unlock(&lock);
-	printf("4\n");
 }
 
 int get_event()

@@ -28,8 +28,7 @@ clean:
 
 
 ############### ULRICA ################
-u_game.out: u_game.o extras.o client_graphics3.o 
-#game3.o client_run3.o
+u_game.out: u_game.o extras.o client_graphics.o game.o client_run3.o
 	$(CC) $(OFLAGS) -o $@ $^ -lSDL2 -lSDL2_ttf -pthread
 
 game3.o: game.c
