@@ -44,7 +44,6 @@ static int thread_check_events(void *data)
 	{
 		if(event == 0)
 			continue;
-		printf("event: %d\n", event);
 		msg[1] = event + '0';
 		cli_send(msg);
 	}
@@ -56,7 +55,7 @@ static int thread_check_events(void *data)
 	while(!playing)
 	{
 		if(get_event() == -1)
-			exit(0);
+			exit(3);
 	}
 	return 0;
 }
@@ -132,13 +131,17 @@ char* chat_msg(char* first)
 
 void game_msg(char *recv_msg)
 {
-	printf("message: %s\n", recv_msg);
 	char *type; 
 	int length;
 	type = strtok(recv_msg, " ");
 	while (type != NULL)
 	{
-		if(strncmp(type, GAME_START, 2) == 0 && !playing && isdigit(type[2]))
+		if(strcmp(type, "exit") == 0)
+		{
+			printf("server closed\n");
+			exit(3);
+		}
+		else if(strncmp(type, GAME_START, 2) == 0 && !playing && isdigit(type[2]))
 		{
 			l = type[2] - '0';
 			go_cli();
@@ -173,11 +176,6 @@ void* thread_recv(void *data){
 	recv_msg = calloc(256, sizeof(char));
 	while(1){
 		cli_get_msg(recv_msg, 256);
-		if(strcmp(recv_msg, "exit") == 0)
-		{
-			printf("server closed\n");
-			exit(0);
-		}
 		game_msg(recv_msg);
 	}
 	free(recv_msg);
@@ -195,7 +193,7 @@ void* thread_send(void *data){
 		}
 		send_msg[strlen(send_msg)-1] = '\0';
 		if(strcmp(send_msg, "exit") == 0)
-			exit(0);
+			exit(3);
 		cli_send(send_msg);
 	}
 	return NULL;

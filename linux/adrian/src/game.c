@@ -1,7 +1,7 @@
 #include"game.h"
 #include"game_identifiers.h"
 
-struct client *clients;
+static struct client *clients;
 static short *board;
 static struct player *p;
 static int l, winning_points, m, lonely_player;
@@ -14,7 +14,6 @@ struct point{
 
 void send_to_all_game(char *message)
 {
-	printf("message: %s\n", message);
 	int i;
 	for(i=0; i<l; i++)
 	{
@@ -127,7 +126,7 @@ void one_game()
 			index += snprintf(send_msg + index, 100 - index, "%d %d %d ", i, point.x, point.y);
 		}
 		send_to_all_game(send_msg);
-		delay(30);
+		delay(20);
 	} while(playing && players_moved >= min_players_moved);
 	free(send_msg);
 	free(board);
@@ -176,21 +175,28 @@ void go()
 
 void change_dir(int id, int event)
 {
-	printf("event: %d %d\n", id, event);
+	int i;
+	for(i = 0; i < l; i++)
+	{
+		if(clients[i].uid == id)
+		{
+			break;
+		}
+	}
 	if(event == UP_1L)
 	{
-		p[id].dir -= 90;
-		if(p[id].dir<0)
+		p[i].dir -= 90;
+		if(p[i].dir<0)
 		{
-			p[id].dir += 360;
+			p[i].dir += 360;
 		}
 	}
 	else if(event == UP_1R)
 	{
-		p[id].dir += 90;
-		if(p[id].dir>=360)
+		p[i].dir += 90;
+		if(p[i].dir>=360)
 		{
-			p[id].dir -= 360;
+			p[i].dir -= 360;
 		}
 	}
 }
@@ -199,29 +205,34 @@ void play(int mode, int ps, int s, struct clients *c)
 {
 	int i, index;
 	char *send;
+	struct node *node;
 
-	clients = c->client;
+	node = c->first;
 	l = c->size;
 	p = calloc(l, sizeof(struct player));
+	clients = calloc(l, sizeof(struct client));
 	if(l == 1)
 		lonely_player = 1;
 
 	send = calloc(100, sizeof(char));
 	index = 0;
 	index = snprintf(send, 100, "%s%d ", GAME_START, l);
-	for(i=0; i<l; i++)
+	for(i = 0; i < l; i++)
 	{
-		index += snprintf(send + index, 100- index, "%s ", c->client[i].name);
+		index += snprintf(send + index, 100- index, "%s ", node->client->name);
+		clients[i] = *(node->client);
+		node = node->next;
 	}
 	send_to_all_game(send);
 	free(send);
 
-	delay(10000);
+	delay(7000);
 	m = mode;
 	winning_points = ps;
 	printf("go\n");
 	go();
 	free(p);
+	free(clients);
 }
 
 void cheating(int player)

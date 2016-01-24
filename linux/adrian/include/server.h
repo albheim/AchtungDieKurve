@@ -25,13 +25,14 @@ struct client
   char name[10];
 };
 
+/*
 struct clients
 {
   struct client client[10];
   short size;
 };
+*/
 
-/*
 struct clients
 {
 	struct node* first;
@@ -43,13 +44,12 @@ struct node
 	struct client* client;
 	struct node* next;
 };
-*/
 
-void serv_listen (int port);
-struct client serv_accept ();
+struct clients* serv_listen (int port);
+struct client* serv_accept ();
 void serv_send (char *msg, struct client c);
 void serv_get_msg (char *recv_msg, int size, struct client c);
-void serv_disconnect (struct client c);
-void serv_stop ();
+void serv_disconnect(struct client *c);
+void serv_stop();
 
 #endif

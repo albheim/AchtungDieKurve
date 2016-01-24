@@ -51,6 +51,7 @@ void cli_get_msg(char *recv_msg, int length)
 	if((recv_size = recv(server->socket, recv_msg, length, 0)) < 0){
 		error("recive failed: ");
 	}
+	recv_msg[recv_size] = '\0';
 	//printf("message recieved\n");
 }
 

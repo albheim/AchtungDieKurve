@@ -2,6 +2,7 @@
 
 static SOCKET* listen_socket;
 static struct sockaddr_in *listen_server;
+static struct clients *clients;
 
 void error(char *msg)
 {
@@ -30,7 +31,7 @@ void init(int port)
 
 }
 
-void serv_listen(int port)
+struct clients* serv_listen(int port)
 {
 	listen_server = calloc(1, sizeof(struct sockaddr_in));
 
@@ -39,27 +40,15 @@ void serv_listen(int port)
 	listen(*listen_socket , 3);
 	printf("Socket is listening\n");
 
-	/*
 	clients = malloc(sizeof(struct clients));
 	clients->first = NULL;
 	clients->size = 0;
 	atexit(serv_stop);
-	*/
+	return clients;
 }
 
 void serv_send(char *message, struct client c)
 {
-	/*
-	if(id > clients.size)
-		error("sending to wrong client");
-	struct node *node;
-	node = clients->first;
-	for(i = 1; i < id; i++)
-	{
-		node = node->next;
-	}
-	c = node->client
-	*/
 	if(write(c.socket, message, strlen(message))<0){
 		error("error send"); 
 	}
@@ -68,17 +57,6 @@ void serv_send(char *message, struct client c)
 
 void serv_get_msg(char *recv_msg, int size, struct client c)
 {
-	/*
-	if(id > clients.size)
-		error("sending to wrong client");
-	struct node *node;
-	node = clients->first;
-	for(i = 1; i < id; i++)
-	{
-		node = node->next;
-	}
-	c = node->client
-	*/
 	int length;
 	if((length = recv(c.socket, recv_msg, size, 0)) < 0){
 		error("recive error");
@@ -87,52 +65,23 @@ void serv_get_msg(char *recv_msg, int size, struct client c)
 	//printf("message recieved\n");
 }
 
-struct client serv_accept()
+struct client* serv_accept()
 {
 	int c;
-	struct client client;
+	struct client *client;
+	client = malloc(sizeof(struct client));
 	c = sizeof(struct sockaddr_in);
-	client.socket = accept(*listen_socket, (struct sockaddr *)&client.cli_addr, (socklen_t*)&c);
-	if (client.socket < 0)
+	client->socket = accept(*listen_socket, (struct sockaddr *)&client->cli_addr, (socklen_t*)&c);
+	if (client->socket < 0)
 	{
 		error("error accept");
 	}
-	/*
-	char *message;
-	if(clients->size > 9)
-	{
-		message = "Too many clients, please try again later"
-		write(client->socket, message, strlen(message));
-		message = "exit"
-		write(client->socket, message, strlen(message));
-		close(client->socket);
-		free(client);
-		return NULL;
-	}
-	clients->size++;
-	id = clients->size;
-	new = malloc(sizeof(struct node));
-	new->client = client;
-	new->next = NULL;
-	node = clients->first;
-	for(i = 1; i < clients->size; i++)
-	{
-		node = node->next;
-	}
-	node->next = new;
-	*/
-	
 	printf("accept\n");
 	return client;
 }
 
-/*
-void serv_disconnect(int id)
+void serv_disconnect(struct client *c)
 {
-	struct node *node, *last, *next;
-	int i;
-	for(i = 1; i < id; i++)
-	{
 	close(c->socket);
 	free(c);
 }
@@ -142,16 +91,16 @@ void serv_stop()
 	struct node *node;
 	struct node *last;
 	node = clients->first;
-	while(node->next != NULL)
+	while(node != NULL)
 	{
-		cli_close(node->client);
+		serv_send("exit", *(node->client));
+		serv_disconnect(node->client);
 		last = node;
 		node = node->next;
 		free(last);
 	}
-	free(clients)
-	close(listen_socket);
+	free(clients);
+	close(*listen_socket);
 	free(listen_socket);
 	free(listen_server);
 }
-*/
