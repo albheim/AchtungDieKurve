@@ -13,6 +13,8 @@
 #include"client_graphics.h"
 #include"geometry.h"
 #include"server.h"
+#include"extern_server.h"
+#include"extern_client.h"
 
 struct players{
 	int left;

@@ -44,6 +44,7 @@ static int thread_check_events(void *data)
 	{
 		if(event == 0)
 			continue;
+		printf("event: %d\n", event);
 		msg[1] = event + '0';
 		cli_send(msg);
 	}
@@ -74,9 +75,9 @@ void go_cli()
 		strcpy(players[i].name, name);
 	} 
 	init_sdl((struct graphics_player*)players, l);
-	events = SDL_CreateThread(thread_check_events, NULL, players);
 	playing = 1;
 	printf("go\n");
+	events = SDL_CreateThread(thread_check_events, NULL, players);
 }
 
 void points(int length)
@@ -131,6 +132,7 @@ char* chat_msg(char* first)
 
 void game_msg(char *recv_msg)
 {
+	printf("message: %s\n", recv_msg);
 	char *type; 
 	int length;
 	type = strtok(recv_msg, " ");
@@ -171,6 +173,11 @@ void* thread_recv(void *data){
 	recv_msg = calloc(256, sizeof(char));
 	while(1){
 		cli_get_msg(recv_msg, 256);
+		if(strcmp(recv_msg, "exit") == 0)
+		{
+			printf("server closed\n");
+			exit(0);
+		}
 		game_msg(recv_msg);
 	}
 	free(recv_msg);
@@ -184,9 +191,11 @@ void* thread_send(void *data){
 		if (fgets(send_msg, 100, stdin) == NULL)
 		{
 			printf("error fgets");
-			return NULL;
+			exit(1);
 		}
 		send_msg[strlen(send_msg)-1] = '\0';
+		if(strcmp(send_msg, "exit") == 0)
+			exit(0);
 		cli_send(send_msg);
 	}
 	return NULL;

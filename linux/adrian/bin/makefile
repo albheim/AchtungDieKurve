@@ -1,7 +1,7 @@
 VPATH = ../src / ../tdd/ ../ulrica/
 
 CC = cc
-CFLAGS  = -std=c11 -pedantic -Wall -Werror -g -O3 -funsigned-char -I../include/
+CFLAGS  = -std=c11 -pedantic -Wall -Werror -g -funsigned-char -I../include/
 OFLAGS = -g
 
 SERVER_OBJS = server.o game.o extras.o
@@ -40,7 +40,7 @@ game3.o: game.c
 	mv game.o game3.o
 
 client_run3.o: client_run.c
-	$(CC) $(CFLAGS) -c -pthread -D main=notmain -include extern.h $<
+	$(CC) $(CFLAGS) -c -pthread -D main=notmain -include extern_client.h $<
 	mv client_run.o client_run3.o
 
 
@@ -72,15 +72,15 @@ test_server: compile_server $(SERVER_TEST_CASES)
 compile_server.out: test_server.o server.o extras.o game2.o server_run2.o
 	$(CC) $(OFLAGS) -o $@ $^ $(SERVER_LIBS)
 
-test_server.o: test_server.c server.h
-	$(CC) $(CFLAGS) -c $< -I./server/ -D DEF_ACCEPTS=$(ACCEPTS)
+test_server.o: test_server.c
+	$(CC) $(CFLAGS) -c $< -I../include/ -D DEF_ACCEPTS=$(ACCEPTS)
 
 server_run2.o: server_run.c
-	$(CC) $(CFLAGS) -c $< -I./tdd/ -D DEBUG
+	$(CC) $(CFLAGS) -c $< -I../tdd/ -D DEBUG
 	mv server_run.o server_run2.o
 
 game2.o: game.c
-	$(CC) $(CFLAGS) -c $< -I./tdd/ -D DEBUG
+	$(CC) $(CFLAGS) -c $< -I../tdd/ -D DEBUG
 	mv game.o game2.o
 
 server_case_chat:

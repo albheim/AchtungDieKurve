@@ -1,6 +1,7 @@
 #include"server.h"
 #include"game_identifiers.h"
 #include"game.h"
+#include"extern_server.h"
 
 struct clients *clients;
 int playing;
@@ -27,15 +28,16 @@ void* thread_play(void *data)
 
 int game_check(char* recv_msg, int id)
 {
+	printf("gamerecv: %s\n", recv_msg);
 	recv_msg[0] = '.';
 	if(strncmp(".-1", recv_msg, 3) == 0)
 	{
-		
+		playing = 0;
 		return 3;
 	}
 	else if(isdigit(recv_msg[1]))
 	{
-		change_dir(id, recv_msg[1] - '0');
+		change_dir(id - 1, recv_msg[1] - '0');
 		return 3;
 	}
 	return 2;
@@ -98,6 +100,8 @@ void* thread_cli(void *data){
 	char send_msg[256];
 	while(1){ 
 		serv_get_msg(recv_msg, 256, *client);
+		if(strcmp(recv_msg, "exit") == 0)
+			return NULL;
 		check_ret = check(recv_msg, client->uid);
 		if(check_ret == 1)
 		{
@@ -140,6 +144,5 @@ int main(int argc, char *argv[]){
 	run();
 
 	getchar();
-
 	return 0;
 }

@@ -5,7 +5,7 @@
 #include"extras.h"
 #include"server.h"
 #include"geometry.h"
-#include"extern.h"
+#include"extern_server.h"
 #include"events.h"
 
 #define WIDTH (640)
@@ -25,6 +25,6 @@ struct player{
 
 void play(int mode, int ps, int s, struct clients *c);
 void go();
-void change_dir(int event, int id);
+void change_dir(int id, int event);
 
 #endif

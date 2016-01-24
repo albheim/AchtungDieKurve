@@ -5,7 +5,7 @@ static char name[10];
 
 void error(const char *msg)
 {
-	fprintf(stderr, "%s", msg);
+	fprintf(stderr, "%s\n", msg);
 	exit(1);
 }
 
@@ -42,6 +42,7 @@ void init(int port, char *ip_adress)
 		error("error EOF");
 	name[strlen(name)-1] = 0;
 	cli_send(name);
+	atexit(cli_close);
 }
 
 void cli_get_msg(char *recv_msg, int length)
@@ -63,6 +64,7 @@ void cli_send(char *message)
 
 void cli_close()
 {
+	cli_send("exit");
 	close(server->socket);
 	free(server);
 }

@@ -14,6 +14,7 @@ struct point{
 
 void send_to_all_game(char *message)
 {
+	printf("message: %s\n", message);
 	int i;
 	for(i=0; i<l; i++)
 	{
@@ -173,8 +174,9 @@ void go()
 	}
 }
 
-void change_dir(int event, int id)
+void change_dir(int id, int event)
 {
+	printf("event: %d %d\n", id, event);
 	if(event == UP_1L)
 	{
 		p[id].dir -= 90;
