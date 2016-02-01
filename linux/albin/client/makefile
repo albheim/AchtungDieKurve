@@ -1,10 +1,8 @@
 CC = gcc
-CFLAGS = -g -std=c99 -Wall -Werror -pedantic
+CFLAGS = -g -std=c99 -Wall -Werror -pedantic -lSDL2 -lm
+OBJS = main.o client.o controller.o
 
-main: main.o client.o
-	$(CC) main.o client.o -o app
-
-test: client_test.o client.o
-	$(CC) client_test.o client.o
+main: $(OBJS) 
+	$(CC) $(OBJS) $(CFLAGS)
 	./a.out
-	rm a.out
+
