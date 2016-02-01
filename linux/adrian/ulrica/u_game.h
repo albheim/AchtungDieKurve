@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef U_GAME_H
+#define U_GAME_H
 
 #include<string.h>
 #include"extras.h"
@@ -12,14 +12,11 @@
 #include<unistd.h>
 #include"client_graphics.h"
 #include"geometry.h"
+#include"server.h"
+#include"extern_server.h"
+#include"extern_client.h"
 
-struct player{
-	int points;
-	char name[10];
-	int x;
-	int y;
-	int dir;
-	short playing;
+struct players{
 	int left;
 	int right;
 };

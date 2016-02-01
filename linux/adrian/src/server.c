@@ -2,10 +2,11 @@
 
 static SOCKET* listen_socket;
 static struct sockaddr_in *listen_server;
+static struct clients *clients;
 
 void error(char *msg)
 {
-	fprintf(stderr, "%s", msg);
+	fprintf(stderr, "%s\n", msg);
 	exit(1);
 }
 
@@ -30,7 +31,7 @@ void init(int port)
 
 }
 
-void serv_listen(int port)
+struct clients* serv_listen(int port)
 {
 	listen_server = calloc(1, sizeof(struct sockaddr_in));
 
@@ -38,6 +39,12 @@ void serv_listen(int port)
 
 	listen(*listen_socket , 3);
 	printf("Socket is listening\n");
+
+	clients = malloc(sizeof(struct clients));
+	clients->first = NULL;
+	clients->size = 0;
+	atexit(serv_stop);
+	return clients;
 }
 
 void serv_send(char *message, struct client c)
@@ -58,16 +65,42 @@ void serv_get_msg(char *recv_msg, int size, struct client c)
 	//printf("message recieved\n");
 }
 
-struct client serv_accept()
+struct client* serv_accept()
 {
 	int c;
-	struct client client;
+	struct client *client;
+	client = malloc(sizeof(struct client));
 	c = sizeof(struct sockaddr_in);
-	client.socket = accept(*listen_socket, (struct sockaddr *)&client.cli_addr, (socklen_t*)&c);
-	if (client.socket < 0)
+	client->socket = accept(*listen_socket, (struct sockaddr *)&client->cli_addr, (socklen_t*)&c);
+	if (client->socket < 0)
 	{
 		error("error accept");
 	}
 	printf("accept\n");
 	return client;
+}
+
+void serv_disconnect(struct client *c)
+{
+	close(c->socket);
+	free(c);
+}
+
+void serv_stop()
+{
+	struct node *node;
+	struct node *last;
+	node = clients->first;
+	while(node != NULL)
+	{
+		serv_send("exit", *(node->client));
+		serv_disconnect(node->client);
+		last = node;
+		node = node->next;
+		free(last);
+	}
+	free(clients);
+	close(*listen_socket);
+	free(listen_socket);
+	free(listen_server);
 }

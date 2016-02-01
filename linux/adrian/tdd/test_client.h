@@ -9,7 +9,7 @@
 
 //client_graphics
 #define init_sdl test_init_sdl
-#define quit_sdl test_quit_sdl
+#define close_window test_close_window
 #define clear_window test_clear_window
 #define color_pixel test_color_pixel
 #define update_window test_update_window

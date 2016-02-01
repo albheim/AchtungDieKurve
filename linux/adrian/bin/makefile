@@ -1,7 +1,7 @@
 VPATH = ../src / ../tdd/ ../ulrica/
 
 CC = cc
-CFLAGS  = -std=c11 -pedantic -Wall -Werror -g -O3 -funsigned-char -I../include/
+CFLAGS  = -std=c11 -pedantic -Wall -Werror -g -funsigned-char -I../include/
 OFLAGS = -g
 
 SERVER_OBJS = server.o game.o extras.o
@@ -28,10 +28,20 @@ clean:
 
 
 ############### ULRICA ################
-u_game.out: u_game.o extras.o client_graphics.o 
+#u_game.out: u_game.o extras.o client_graphics.o 
+#	$(CC) $(OFLAGS) -o $@ $^ -lSDL2 -lSDL2_ttf -pthread
+
+
+u_game.out: u_game.o extras.o client_graphics.o client_run3.o game3.o
 	$(CC) $(OFLAGS) -o $@ $^ -lSDL2 -lSDL2_ttf -pthread
 
+game3.o: game.c
+	$(CC) $(CFLAGS) -c -D U_GAME $<
+	mv game.o game3.o
 
+client_run3.o: client_run.c
+	$(CC) $(CFLAGS) -c -pthread -D main=notmain -include extern_client.h $<
+	mv client_run.o client_run3.o
 
 
 
@@ -62,15 +72,15 @@ test_server: compile_server $(SERVER_TEST_CASES)
 compile_server.out: test_server.o server.o extras.o game2.o server_run2.o
 	$(CC) $(OFLAGS) -o $@ $^ $(SERVER_LIBS)
 
-test_server.o: test_server.c server.h
-	$(CC) $(CFLAGS) -c $< -I./server/ -D DEF_ACCEPTS=$(ACCEPTS)
+test_server.o: test_server.c
+	$(CC) $(CFLAGS) -c $< -I../include/ -D DEF_ACCEPTS=$(ACCEPTS)
 
 server_run2.o: server_run.c
-	$(CC) $(CFLAGS) -c $< -I./tdd/ -D DEBUG
+	$(CC) $(CFLAGS) -c $< -I../tdd/ -D DEBUG
 	mv server_run.o server_run2.o
 
 game2.o: game.c
-	$(CC) $(CFLAGS) -c $< -I./tdd/ -D DEBUG
+	$(CC) $(CFLAGS) -c $< -I../tdd/ -D DEBUG
 	mv game.o game2.o
 
 server_case_chat:
@@ -92,14 +102,14 @@ test_client: compile_client $(CLIENT_TEST_CASES)
 compile_client.out: test_client.o client_graphics.o client.o client_run2.o
 	$(CC) $(OFLAGS) -o $@ $^ $(CLIENT_LIBS)
 
-test_client.o: test_client.c client.h
-	$(CC) $(CFLAGS) -c $< -I./client/
+test_client.o: test_client.c 
+	$(CC) $(CFLAGS) -c $< ../include/client.h
 
 test_graphics.out: test_graphics.c client_graphics.o extras.o
 	$(CC) $(OFLAGS) -o $@ $^ $(CLIENT_LIBS)
 
 client_run2.o: client_run.c
-	$(CC) $(CFLAGS) -c $< -I./tdd/ -D DEBUG
+	$(CC) $(CFLAGS) -c $< -I../tdd/ -D DEBUG
 	mv client_run.o client_run2.o
 
 client_case_chat:

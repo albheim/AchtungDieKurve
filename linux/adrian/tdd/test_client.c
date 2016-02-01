@@ -39,9 +39,9 @@ void test_init_sdl(struct graphics_player *p, int length)
 	init_sdl(p, length);
 }
 
-void test_quit_sdl()
+void test_close_window()
 {
-	quit_sdl();
+	close_window();
 }
 
 void test_clear_window()

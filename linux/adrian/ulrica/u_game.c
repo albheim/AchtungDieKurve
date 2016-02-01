@@ -1,257 +1,30 @@
 #include"u_game.h"
 #include"game_identifiers.h"
+#include"game.h"
 
-static short *board;
-static struct player *p;
-static int u = -1, playing, l, winning_points, m, lonely_player;
-static pthread_t events;
+static struct players *p;
+static struct graphics_player *p2;
+int playing;
+static int l, u = -1; 
+static SDL_Thread* events_t;
 
-int string_to_int(char* in)
-{
-	int nbr, minus, i;
-	if(in == NULL || strlen(in) == 0)
-		return -2;
-	if(in[0] == '-')
-	{
-		minus = -1;
-		i = 1;
-	}
-	else
-	{
-		minus = 1;
-		i = 0;
-	}
-	nbr = 0;
-	for (; i < strlen(in); i++)
-	{
-		if(!isdigit(in[i]))
-			return -2;
-		nbr *= 10;
-		nbr += in[i] - '0';
-	}
-	nbr *= minus;
-	return nbr;
-}
+#define send_to_all_game game_msg
+void game_msg(char *input);
+int string_to_int(char* in);
+void cheating(int p);
 
-void points(int length)
-{
-	char *p, *points;
-	int i, ip, ipoints;
-	for(i = 0; i < length; i++)
-	{
-		p = strtok(NULL, " ");
-		points = strtok(NULL, " ");
-		ip = string_to_int(p);
-		ipoints = string_to_int(points);
-		if(ip == -2 || ipoints == -2)
-			return;
-		change_points(ip, ipoints);
-	}
-}
+void serv_send(char* msg, struct client c)
+{}
+void cli_send(char* msg)
+{}
+void cli_get_msg(char* msg)
+{}
+void init()
+{}
+void cli_close()
+{}
 
-void pixels(int length)
-{
-	char *col, *x, *y; 
-	int i, icol, ix, iy;
-	for(i = 0; i < length; i++)
-	{
-		col = strtok(NULL, " ");
-		x = strtok(NULL, " ");
-		y = strtok(NULL, " ");
-		icol = string_to_int(col);
-		ix = string_to_int(x);
-		iy = string_to_int(y);
-		if(icol == -2 || ix == -2 || iy == -2)
-			return;
-		color_pixel(icol, ix, iy);
-	}
-}
-	
-
-void send_to_all_game(char *send_msg)
-{
-	char *type; 
-	int length;
-	type = strtok(send_msg, " ");
-	while (type != NULL)
-	{
-		if(type[0] != GAME_MSG)
-		{
-			//input chat message
-			continue;
-		}
-		if(type[1] == '1')
-		{
-			clear_window();
-		}
-		else if(type[1] == '2')
-		{
-			length = send_msg[2] - '0';
-			points(length);
-		}
-		else if(type[1] == '3')
-		{
-			length = send_msg[2] - '0';
-			pixels(length);
-		}
-		type = strtok(NULL, " ");
-	}
-	update_window();
-}
-
-struct point{
-	int x;
-	int y;
-};
-
-void add_points()
-{
-	int i, index, length;
-	length = 0;
-	char send_msg[100];
-	index = snprintf(send_msg, 100, "%c2 ", GAME_MSG);
-	for(i=0; i<l; i++)
-	{
-		if(p[i].playing || lonely_player)
-		{
-			p[i].points++;
-			length++;
-			index += snprintf(send_msg + index, 100 - index, " %d %d", i, p[i].points);
-		}
-	}
-	send_msg[2] = length + '0';
-	send_to_all_game(send_msg);
-}
-
-int is_killed(int x, int y)
-{
-	if(x<0 || y<0 || x>W-2 || y>HEIGHT-1)
-	{
-		return 1;
-	}
-	else if(board[x+Y(y)] != 0)
-	{
-		return 1;
-	}
-	return 0;
-}
-
-struct point move(struct player *p_current, int i, int *moved)
-{
-	struct point point;
-	point.x = p_current->x;
-	point.y = p_current->y;
-	if(p_current->playing == 0)
-	{
-		return point;
-	}
-	if(is_killed(p_current->x, p_current->y))
-	{
-		p_current->playing = 0;
-		add_points();
-		return point;
-	}
-	(*moved)++;
-	board[p_current->x + Y(p_current->y)] = i + 1;
-	switch(p_current->dir)
-	{
-		case(0):
-			p_current->y--;
-			break;
-		case(90):
-			p_current->x++;
-			break;
-		case(180):
-			p_current->y++;
-			break;
-		case(270):
-			p_current->x--;
-			break;
-	}
-	point = (struct point) {p_current->x, p_current->y};
-	return point;
-}
-
-void one_game()
-{
-	int i, index, players_moved, min_players_moved;
-	char *send_msg;
-	if (l == 1)
-		min_players_moved = 1;
-	else
-		min_players_moved = 2;
-	send_msg = calloc(100, sizeof(char));
-	board = calloc(HEIGHT*W, sizeof(short));
-	index = snprintf(send_msg, 100, "%c3%d", GAME_MSG, l);;
-	for (i=0; i<l; i++)
-	{
-		p[i].dir = (rand()%4) * 90;
-		p[i].x = rand()%(W - 40) + 20;
-		p[i].y = rand()%(HEIGHT - 40) + 20;
-		p[i].playing = 1;
-		index += snprintf(send_msg + index, 100 - index, " %d %d %d", i, p[i].x, p[i].y);
-	}
-	send_to_all_game(send_msg);
-	delay(2000);
-	struct point point;
-	do
-	{
-		players_moved = 0;
-		index = snprintf(send_msg, 100, "%c3%d", GAME_MSG, l);
-		for(i = 0; i<l; i++)
-		{
-			point = move(&p[i], i, &players_moved);
-			index += snprintf(send_msg + index, 100 - index, " %d %d %d", i, point.x, point.y);
-		}
-		send_to_all_game(send_msg);
-		delay(30);
-	} while(playing && players_moved >= min_players_moved);
-	free(send_msg);
-	free(board);
-}
-
-int is_end_game()
-{
-	int i, max_i, max;
-	max_i = -1;
-	max = 0;
-	for (i = 0; i < l; i++)
-	{
-		if(p[i].points >= winning_points && p[i].points > max)
-		{
-			max_i = i;
-			max = p[i].points;
-		}
-	}
-	return max_i;
-}
-
-void go()
-{
-	int winner;
-	int seed;
-	char send_msg[3];
-	send_msg[0] = GAME_MSG;
-	send_msg[1] = '1';
-	send_msg[2] = '\0';
-
-	seed = time(NULL);
-	srand(seed);
-	while(playing)
-	{
-		one_game();
-		delay(5000);
-		send_to_all_game(send_msg);
-		winner = is_end_game();
-		if (winner != -1)
-		{
-			playing = 0;
-			printf("Grattis till %s, du är tydligen bäst!!\n", p[winner].name);
-		}	
-	}
-}
-
-void *thread_check_events(void *data)
+static int thread_check_events2(void *data)
 {
 	int event, i;
 	while(playing && (event = get_event()) != -1)
@@ -260,50 +33,23 @@ void *thread_check_events(void *data)
 			continue;
 		else if(event == UP_ULRICA && u != -1)
 		{
-			p[u].points++;
+			cheating(u);
 		}
 		for(i = 0; i < l; i++)
 		{
 			if(event == p[i].left)
 			{
-				p[i].dir -= 90;
-				if(p[i].dir<0)
-				{
-					p[i].dir += 360;
-				}
+				change_dir(UP_1L, i);
 			}
 			else if(event == p[i].right)
 			{
-				p[i].dir += 90;
-				if(p[i].dir>=360)
-				{
-					p[i].dir -= 360;
-				}
+				change_dir(UP_1R, i);
 			}
 		}
 	}
 	playing = 0;
 	close_window();
-	return NULL;
-}
-
-void play(int mode, int ps)
-{
-	int i;
-	playing = 1;
-	struct graphics_player *players;
-	players = calloc(l, sizeof(struct graphics_player));
-	for (i = 0; i<l; i++)
-	{
-		strcpy(players[i].name, p[i].name);
-	} 
-	init_sdl(players, l);
-	pthread_create(&events, NULL, thread_check_events, NULL);
-	if(l == 1)
-		lonely_player = 1;
-	m = mode;
-	winning_points = ps;
-	go();
+	return 0;
 }
 
 void print_controlls()
@@ -311,10 +57,10 @@ void print_controlls()
 	int i;
 	char left[] = {0, 'Q', 'N', 'Z', '7'};
 	char right[] = {0, 'W', 'M', 'X', '8'};
-	printf("\n%s:\nVänster: vänsterpil\nHöger: högerpil\n\n", p[0].name);
+	printf("\n%s:\nVänster: vänsterpil\nHöger: högerpil\n\n", p2[0].name);
 	for(i = 1; i < l; i++)
 	{
-		printf("%s:\nVänster: %c\nHöger: %c\n\n", p[i].name, left[i], right[i]);
+		printf("%s:\nVänster: %c\nHöger: %c\n\n", p2[i].name, left[i], right[i]);
 	}
 }
 
@@ -322,6 +68,7 @@ int main(int argc, char* argv[])
 {
 	char input[10], *ret;
 	int i;
+	struct clients clients;
 
 	printf("Välkommen till AchtungDieUlrica!\n");
 	delay(3000);
@@ -343,29 +90,34 @@ int main(int argc, char* argv[])
 		delay(1000);
 	}
 	
-	p = calloc(l, sizeof(struct player));
-
+	p = calloc(l, sizeof(struct players));
+	p2 = calloc(l, sizeof(struct graphics_player));
+	clients.size = l;
 	for(i = 0; i < l; i++)
 	{
 		printf("Namn på spelare %d\n", i+1);
-		if((ret = fgets(p[i].name, 10, stdin)) == NULL)
+		if((ret = fgets(p2[i].name, 10, stdin)) == NULL)
 		{
 			return 1;
 		}
-		p[i].name[strlen(p[i].name)-1] = '\0';
-		if(strcmp(p[i].name, "Ulrica") == 0 || strcmp(p[i].name, "ulrica") == 0)
+		p2[i].name[strlen(p2[i].name)-1] = '\0';
+		if(strcmp(p2[i].name, "Ulrica") == 0 || strcmp(p2[i].name, "ulrica") == 0)
 		{
-			printf("Vad kul att du ska vara med och spela %s!\n", p[i].name);
+			printf("Vad kul att du ska vara med och spela %s!\n", p2[i].name);
 			u = i;
 			delay(1000);
 		}
 		p[i].left = 2*i + 3;
 		p[i].right = 2*i + 4;
+		strcpy(clients.client[i].name, p2[i].name);
 	}
 	print_controlls();
 	delay(3000);
-	play(0, 20);
-	pthread_join(events, NULL);
+	init_sdl((struct graphics_player*)p2, l);
+	playing = 1;
+	events_t = SDL_CreateThread(thread_check_events2, NULL, NULL);
+	play(0, 20, 0, &clients);
+	SDL_WaitThread(events_t, NULL);
 	free(p);
 	return 0;
 }

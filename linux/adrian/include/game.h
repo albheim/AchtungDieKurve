@@ -5,6 +5,8 @@
 #include"extras.h"
 #include"server.h"
 #include"geometry.h"
+#include"extern_server.h"
+#include"events.h"
 
 #define WIDTH (640)
 #define HEIGHT (480)
@@ -21,17 +23,8 @@ struct player{
 	short playing;
 };
 
-enum event {
-	QUIT = -1,
-	NONE,
-	DOWN_LEFT,
-	DOWN_RIGHT,
-	UP_LEFT,
-	UP_RIGHT,
-};
-
-void play(int mode, int ps, struct clients *c);
+void play(int mode, int ps, int s, struct clients *c);
 void go();
-void change_dir(int event, int id);
+void change_dir(int id, int event);
 
 #endif
